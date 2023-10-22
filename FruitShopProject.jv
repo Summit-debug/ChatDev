@@ -1,0 +1,251 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+class Product { // CLASS 1
+
+    String name;
+    double price;
+    int quantity;
+
+    public Product(String name, double price, int quantity) {
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
+}
+
+class FruitItem extends Product { // CLASS 2
+
+    public FruitItem(String name, double price, int quantity) {
+        super(name, price, quantity);
+    }
+
+    public double calculatePrice(double weight) {
+        return weight * price;
+    }
+}
+
+class JuiceBottle extends Product { // CLASS 3
+
+    public JuiceBottle(String name, double price, int quantity) {
+        super(name, price, quantity);
+    }
+
+    public double calculatePrice(int bottles) {
+        return bottles * price;
+    }
+}
+
+class Customer extends Thread { // CLASS 4 (implicit threading is used )
+
+    private final List<FruitItem> fruitCart;
+    private final List<JuiceBottle> juiceCart;
+    private double totalCost;
+
+    public Customer() {
+        fruitCart = new ArrayList<>();
+        juiceCart = new ArrayList<>();
+        totalCost = 0.0;
+    }
+
+    public void run() {
+        selectAndBuyFruits(Main.fruitItemList);
+    }
+
+    public void selectAndBuyFruits(List<FruitItem> fruitList) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Welcome to the Fruit Shop!");
+        while (true) {
+            System.out.println("\nHere are the available options:");
+            System.out.println("1. Buy Fruit Items (in KG)");
+            System.out.println("2. Buy Fruit Juice Bottles (per bottle)");
+            System.out.println("3. Finish shopping\n");
+
+            System.out.print("Enter the number of the option you want to select: ");
+            int option = scanner.nextInt();
+
+            if (option == 1) {
+                System.out.println("Here are the available fruits:\n");
+                System.out.println("Fruit List:");
+                for (int i = 0; i < fruitList.size(); i++) {
+                    System.out.println((i + 1) + ". " + fruitList.get(i).name);
+                }
+                System.out.println((fruitList.size() + 1) + ". Finish buying fruits");
+
+                System.out.print("Enter the number of the fruit you want to buy or " + (fruitList.size() + 1) + " to finish: ");
+                int selection = scanner.nextInt();
+
+                if (selection >= 1 && selection <= fruitList.size()) {
+                    FruitItem selectedFruit = fruitList.get(selection - 1);
+                    displayInfo(selectedFruit);
+
+                    if (selectedFruit.name.equalsIgnoreCase("Banana")) {
+                        // Special handling for bananas
+                        System.out.print("Enter the number of dozens you want to buy: ");
+                        int dozens = scanner.nextInt();
+                        int bananas = dozens * 12; // 1 dozen = 12 bananas
+                        selectedFruit.quantity -= bananas;
+
+                        int cost = dozens * 100; // 1 dozen = 100 Rupees
+                        totalCost += cost;
+
+                        fruitCart.add(new FruitItem(selectedFruit.name, selectedFruit.price, bananas));
+                        System.out.println("Added " + dozens + " dozens of " + selectedFruit.name + " to your cart.");
+                    } else {
+                        System.out.print("Enter the weight (in kg) you want to buy: ");
+                        double weight = scanner.nextDouble();
+
+                        if (weight > 0) {
+                            if (weight <= selectedFruit.quantity) {
+                                double cost = selectedFruit.calculatePrice(weight);
+                                totalCost += cost;
+                                selectedFruit.quantity -= (int) weight;
+
+                                fruitCart.add(new FruitItem(selectedFruit.name, selectedFruit.price, (int) weight));
+                                System.out.println("Added " + weight + " kg of " + selectedFruit.name + " to your cart.");
+                            } else {
+                                System.out.println("\nInsufficient quantity available.");
+                            }
+                        } else {
+                            System.out.println("\nInvalid weight. Please select a valid weight.");
+                        }
+                    }
+
+                    System.out.println("Subtotal: Rs. " + totalCost);
+                } else if (selection == fruitList.size() + 1) {
+                    break;
+                } else {
+                    System.out.println("\nInvalid selection. Please enter a valid number.");
+                }
+            } else if (option == 2) {
+                selectAndBuyFruitJuice(fruitList);
+            } else if (option == 3) {
+                break;
+            } else {
+                System.out.println("\nInvalid option. Please enter a valid number.");
+            }
+        }
+    }
+
+    public void selectAndBuyFruitJuice(List<FruitItem> fruitList) {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("Here are the available fruit juices:\n");
+            System.out.println("Fruit Juice List: ");
+            for (int i = 0; i < fruitList.size(); i++) {
+                System.out.println((i + 1) + ". " + fruitList.get(i).name);
+            }
+            System.out.println((fruitList.size() + 1) + ". Finish buying fruit juices");
+
+            System.out.print("Enter the number of the Juice Bottles you want to buy or " + (fruitList.size() + 1) + " to finish: ");
+            int selection = scanner.nextInt();
+
+            if (selection >= 1 && selection <= fruitList.size()) {
+                FruitItem selectedFruit = fruitList.get(selection - 1);
+                displayInfo(selectedFruit);
+
+                System.out.print("Enter the number of bottles you want to buy: ");
+                int bottles = scanner.nextInt();
+
+                if (bottles > 0) {
+                    if (bottles <= selectedFruit.quantity) {
+                        double cost = selectedFruit.calculatePrice(bottles);
+                        totalCost += cost;
+                        selectedFruit.quantity -= bottles;
+
+                        juiceCart.add(new JuiceBottle(selectedFruit.name, selectedFruit.price, bottles));
+                        System.out.println("Added " + bottles + " bottles of " + selectedFruit.name + " to your cart.");
+                        System.out.println("Subtotal: Rs." + totalCost);
+                    } else {
+                        System.out.println("\nInsufficient quantity available.");
+                    }
+                } else {
+                    System.out.println("\nInvalid number of bottles. Please select a valid number.");
+                }
+            } else if (selection == fruitList.size() + 1) {
+                break;
+            } else {
+                System.out.println("\nInvalid selection. Please enter a valid number.");
+            }
+        }
+    }
+
+    private void displayInfo(Product product) {
+        System.out.println("Name: " + product.name);
+        System.out.println("Price: Rs." + product.price);
+        System.out.println("Quantity Available: " + product.quantity);
+    }
+
+    public void displayCart() {
+        System.out.println("\n★彡[𝐘𝐎𝐔𝐑 𝐂𝐀𝐑𝐓 𝐂𝐎𝐍𝐓𝐀𝐈𝐍𝐒]彡★");
+
+        System.out.println(" ⁍Fruit Items (in KG):");
+        for (FruitItem item : fruitCart) {
+            System.out.println(item.name + " - " + item.quantity + " kg");
+        }
+
+        System.out.println(" ⁍Fruit Juice Bottles (per ltr bottle):");
+        for (JuiceBottle item : juiceCart) {
+            System.out.println(item.name + " - " + item.quantity + " bottles");
+        }
+
+        System.out.println(" ⁍Total Cost: Rs. " + totalCost);
+        System.out.println("\n👍 Thank you for shopping at the Fruit Shop! 👍");
+    }
+}
+
+public class Main { //  class 5
+
+    public static List<FruitItem> fruitItemList = new ArrayList<>();
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // List of available products
+        fruitItemList.add(new FruitItem("Apple", 300, 100));
+        fruitItemList.add(new FruitItem("Banana", 100, 150));
+        fruitItemList.add(new FruitItem("Orange", 180, 80));
+        fruitItemList.add(new FruitItem("Strawberry", 400, 50));
+        fruitItemList.add(new FruitItem("Mango", 350, 60));
+        fruitItemList.add(new FruitItem("Grapes", 170, 90));
+        fruitItemList.add(new FruitItem("Pineapple", 600, 40));
+        fruitItemList.add(new FruitItem("Watermelon", 450, 75));
+        fruitItemList.add(new FruitItem("Kiwi", 220, 30));
+        fruitItemList.add(new FruitItem("Peach", 170, 70));
+        fruitItemList.add(new FruitItem("Pear", 170, 55));
+        fruitItemList.add(new FruitItem("Blueberry", 260, 50));
+        fruitItemList.add(new FruitItem("Dragon Fruit", 750, 100));
+        fruitItemList.add(new FruitItem("Avocado", 350, 45));
+        fruitItemList.add(new FruitItem("Blackberry", 290, 55));
+        fruitItemList.add(new FruitItem("Coconut", 300, 40));
+        fruitItemList.add(new FruitItem("Pomegranate", 280, 75));
+
+        System.out.print("Enter the number of customers: ");
+        int numCustomers = scanner.nextInt();
+
+        List<Customer> customers = new ArrayList<>();
+
+        for (int customerCount = 1; customerCount <= numCustomers; customerCount++) {
+            Customer customer = new Customer();
+            customers.add(customer);
+
+            System.out.println("\nCustomer " + customerCount + ", please select your items:\n");
+
+            customer.selectAndBuyFruits(fruitItemList);
+
+            System.out.println("\n*************************************************************************\n"
+                    + "Customer " + customerCount + " has finished shopping. "
+                    + "Thank you for visiting the Fruit Shop!\n"
+                    + "*************************************************************************");
+        }
+
+        for (int j = 0; j < customers.size(); j++) {
+            System.out.println("\nCustomer " + (j + 1) + " purchased the following items:");
+            customers.get(j).displayCart();
+       
+        }
+    }
+}
